@@ -156,6 +156,7 @@ class YOLO(object):
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
             # print(label, (left, top), (right, bottom))
+            print(image.size)
 
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
@@ -176,7 +177,7 @@ class YOLO(object):
         #end = timer()
         # end = time.time()
         # print(end - start)
-        return image
+        return image, out_boxes, out_scores, out_classes
 
     def close_session(self):
         self.sess.close()
@@ -206,7 +207,12 @@ def detect_video(yolo, video_path, output_path=""):
         # frame = cv2.imread(video_path)
         frame = get_video()
         image = Image.fromarray(frame)
-        image = yolo.detect_image(image)
+        image, out_boxes, out_scores, out_classes = yolo.detect_image(image)
+
+        for i, c in reversed(list(enumerate(out_classes))):
+            if yolo.class_names[c] == "bottle":
+                print(out_boxes[i])
+
         result = np.asarray(image)
         curr_time = timer()
         exec_time = curr_time - prev_time

@@ -85,8 +85,14 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     image = new_image
 
     # flip image or not
-    flip = rand()<.5
-    if flip: image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    flip_lr = rand()<.5
+    if flip_lr: image = image.transpose(Image.FLIP_LEFT_RIGHT)
+
+    flip_tb = rand()<.5
+    if flip_tb: image = image.transpose(Image.FLIP_TOP_BOTTOM)
+
+    rotate = rand()<.5
+    if rotate: image = image.transpose(Image.ROTATE_90)
 
     # distort image
     hue = rand(-hue, hue)
@@ -106,10 +112,19 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     box_data = np.zeros((max_boxes,5))
     if len(box)>0:
         np.random.shuffle(box)
-        box[:, [0,2]] = box[:, [0,2]]*nw/iw + dx
-        box[:, [1,3]] = box[:, [1,3]]*nh/ih + dy
-        if flip: box[:, [0,2]] = w - box[:, [2,0]]
-        box[:, 0:2][box[:, 0:2]<0] = 0
+        box[:, [0, 2]] = box[:, [0, 2]]*nw/iw + dx
+        box[:, [1, 3]] = box[:, [1, 3]]*nh/ih + dy
+        if flip_lr:
+            box[:, [0, 2]] = w - box[:, [2, 0]]
+        if flip_tb:
+            box[:, [1, 3]] = h - box[:, [3, 1]]
+        if rotate:
+            tmp_box = box
+            tmp_box[:, [0, 2]] = tmp_box[:, [1, 3]]
+            box[:, [1, 3]] = w - box[:, [2, 0]]
+            box[:, [0, 2]] = tmp_box[:, [0, 2]]
+
+        box[:, 0: 2][box[:, 0: 2]<0] = 0
         box[:, 2][box[:, 2]>w] = w
         box[:, 3][box[:, 3]>h] = h
         box_w = box[:, 2] - box[:, 0]
